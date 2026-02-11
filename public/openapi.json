@@ -1,0 +1,2576 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Flapjack API",
+    "description": "Drop-in replacement for Algolia search. Provides full-text search with filters, facets, geo-search, and more.",
+    "contact": {
+      "name": "Flapjack",
+      "url": "https://github.com/stuartcrobinson/flapjack"
+    },
+    "license": {
+      "name": "MIT OR Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://fj-us-west-1.flapjack.foo",
+      "description": "Production US West"
+    },
+    {
+      "url": "http://localhost:7700",
+      "description": "Local development"
+    }
+  ],
+  "paths": {
+    "/1/indexes": {
+      "get": {
+        "tags": [
+          "indices"
+        ],
+        "summary": "List all indices",
+        "operationId": "list_indices",
+        "responses": {
+          "200": {
+            "description": "List of all indices",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "indices"
+        ],
+        "summary": "Create a new index",
+        "operationId": "create_index",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIndexRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Index created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateIndexResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "409": {
+            "description": "Index already exists"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}": {
+      "delete": {
+        "tags": [
+          "indices"
+        ],
+        "summary": "Delete an index",
+        "operationId": "delete_index",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name to delete",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/batch": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Add or update documents in batch",
+        "operationId": "add_documents",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Batch operations or single document",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Documents added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddDocumentsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/browse": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Browse all documents in an index with pagination",
+        "operationId": "browse_index",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Browse request with optional cursor",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Documents page with cursor",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/clear": {
+      "post": {
+        "tags": [
+          "indices"
+        ],
+        "summary": "Clear all documents from an index",
+        "operationId": "clear_index",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name to clear",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index cleared successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/deleteByQuery": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Delete objects matching a filter query",
+        "operationId": "delete_by_query",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteByQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Objects deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter query"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/export": {
+      "get": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Export index as downloadable snapshot",
+        "operationId": "export_snapshot",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot file",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/facets/{facetName}/query": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search for facet values with optional filtering",
+        "operationId": "search_facet_values",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "facetName",
+            "in": "path",
+            "description": "Facet field name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Facet search parameters",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchFacetValuesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Facet values matching query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchFacetValuesResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Index or facet not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/import": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Import index from uploaded snapshot",
+        "operationId": "import_snapshot",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Snapshot tar.gz file",
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Import successful",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Import failed"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/objects": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Get multiple objects by ID in batch",
+        "operationId": "get_objects",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetObjectsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Objects retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetObjectsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/operation": {
+      "post": {
+        "tags": [
+          "indices"
+        ],
+        "summary": "Move or copy an index",
+        "operationId": "operation_index",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Source index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationIndexRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Operation completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid operation"
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/queries": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Batch search across multiple queries",
+        "operationId": "batch_search",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index to search",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Batch search request with multiple queries",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Batch search results",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/query": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search an index with full-text query and filters",
+        "operationId": "search",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index to search",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Search parameters including query, filters, facets, and pagination",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Search results with hits and facets",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/restore": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Restore index from S3 snapshot",
+        "operationId": "restore_from_s3",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Restore options with snapshot ID",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Restore successful",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "S3 not configured"
+          },
+          "404": {
+            "description": "Snapshot not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/rules/batch": {
+      "post": {
+        "tags": [
+          "rules"
+        ],
+        "summary": "Batch save multiple rules",
+        "operationId": "save_rules",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Array of rules",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Rules saved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/rules/clear": {
+      "post": {
+        "tags": [
+          "rules"
+        ],
+        "summary": "Clear all rules for an index",
+        "operationId": "clear_rules",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules cleared",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/rules/search": {
+      "post": {
+        "tags": [
+          "rules"
+        ],
+        "summary": "Search for rules",
+        "operationId": "search_rules",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Search parameters",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Matching rules",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/rules/{objectID}": {
+      "get": {
+        "tags": [
+          "rules"
+        ],
+        "summary": "Get a rule by ID",
+        "operationId": "get_rule",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Rule ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rule retrieved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Rule not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "rules"
+        ],
+        "summary": "Create or update a rule",
+        "operationId": "save_rule",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Rule ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Rule data",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Rule saved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "rules"
+        ],
+        "summary": "Delete a rule by ID",
+        "operationId": "delete_rule",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Rule ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rule deleted",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Rule not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/settings": {
+      "get": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Get index settings",
+        "operationId": "get_settings",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Index settings",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "settings"
+        ],
+        "summary": "Update index settings",
+        "operationId": "set_settings",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Settings to update",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid settings"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/snapshot": {
+      "post": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "Upload index snapshot to S3",
+        "operationId": "snapshot_to_s3",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot uploaded to S3",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "S3 not configured"
+          },
+          "404": {
+            "description": "Index not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/snapshots": {
+      "get": {
+        "tags": [
+          "snapshots"
+        ],
+        "summary": "List available S3 snapshots for an index",
+        "operationId": "list_s3_snapshots",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of snapshots",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "S3 not configured"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/synonyms/batch": {
+      "post": {
+        "tags": [
+          "synonyms"
+        ],
+        "summary": "Batch save multiple synonyms",
+        "operationId": "save_synonyms",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Array of synonyms",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Synonyms saved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/synonyms/clear": {
+      "post": {
+        "tags": [
+          "synonyms"
+        ],
+        "summary": "Clear all synonyms for an index",
+        "operationId": "clear_synonyms",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Synonyms cleared",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/synonyms/search": {
+      "post": {
+        "tags": [
+          "synonyms"
+        ],
+        "summary": "Search for synonyms",
+        "operationId": "search_synonyms",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Search parameters",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Matching synonyms",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/synonyms/{objectID}": {
+      "get": {
+        "tags": [
+          "synonyms"
+        ],
+        "summary": "Get a synonym by ID",
+        "operationId": "get_synonym",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Synonym ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Synonym retrieved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Synonym not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "synonyms"
+        ],
+        "summary": "Create or update a synonym",
+        "operationId": "save_synonym",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Synonym ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Synonym data",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Synonym saved",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "synonyms"
+        ],
+        "summary": "Delete a synonym by ID",
+        "operationId": "delete_synonym",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Synonym ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Synonym deleted",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Synonym not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/task/{task_id}": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Get task status for a specific index",
+        "operationId": "get_task_for_index",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "task_id",
+            "in": "path",
+            "description": "Task ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task status and results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/indexes/{indexName}/{objectID}": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Get a single object by ID",
+        "operationId": "get_object",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Object ID to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Update or create an object",
+        "operationId": "put_object",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Object ID to update or create",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Object data",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Object updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Delete a single object by ID",
+        "operationId": "delete_object",
+        "parameters": [
+          {
+            "name": "indexName",
+            "in": "path",
+            "description": "Index name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectID",
+            "in": "path",
+            "description": "Object ID to delete",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Object deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/keys": {
+      "get": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "List all API keys",
+        "operationId": "list_keys",
+        "responses": {
+          "200": {
+            "description": "List of keys",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Create a new API key",
+        "operationId": "create_key",
+        "requestBody": {
+          "description": "Key configuration",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Key created",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/keys/generateSecuredApiKey": {
+      "post": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Generate a secured API key with restrictions",
+        "operationId": "generate_secured_key",
+        "requestBody": {
+          "description": "Secured key restrictions",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Secured key generated",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/keys/{key}": {
+      "get": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Get an API key by value",
+        "operationId": "get_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "API key value",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Key details",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Update an API key",
+        "operationId": "update_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "API key value",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Key updates",
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Key updated",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Delete an API key",
+        "operationId": "delete_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "API key value",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Key deleted",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/keys/{key}/restore": {
+      "post": {
+        "tags": [
+          "keys"
+        ],
+        "summary": "Restore a deleted API key",
+        "operationId": "restore_key",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "description": "API key value",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Key restored",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Key not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/1/tasks/{task_id}": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Get task status by ID",
+        "operationId": "get_task",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "description": "Task ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task status and results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found"
+          }
+        },
+        "security": [
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health check endpoint",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Server is healthy"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddDocumentsRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "requests"
+            ],
+            "properties": {
+              "requests": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/BatchOperation"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "documents"
+            ],
+            "properties": {
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {},
+                  "propertyNames": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AddDocumentsResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "taskID",
+              "objectIDs"
+            ],
+            "properties": {
+              "objectIDs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "taskID": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "task_uid",
+              "status",
+              "received_documents"
+            ],
+            "properties": {
+              "received_documents": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "type": "string"
+              },
+              "task_uid": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "BatchOperation": {
+        "type": "object",
+        "required": [
+          "action",
+          "body"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "createIfNotExists": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateIndexRequest": {
+        "type": "object",
+        "required": [
+          "uid"
+        ],
+        "properties": {
+          "schema": {
+            "$ref": "#/components/schemas/IndexSchema"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateIndexResponse": {
+        "type": "object",
+        "required": [
+          "uid",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "DeleteByQueryRequest": {
+        "type": "object",
+        "properties": {
+          "filters": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DocFailureDto": {
+        "type": "object",
+        "required": [
+          "doc_id",
+          "error",
+          "message"
+        ],
+        "properties": {
+          "doc_id": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "FacetHit": {
+        "type": "object",
+        "required": [
+          "value",
+          "highlighted",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "highlighted": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "GetObjectRequest": {
+        "type": "object",
+        "required": [
+          "indexName",
+          "objectID"
+        ],
+        "properties": {
+          "attributesToRetrieve": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "indexName": {
+            "type": "string"
+          },
+          "objectID": {
+            "type": "string"
+          }
+        }
+      },
+      "GetObjectsRequest": {
+        "type": "object",
+        "required": [
+          "requests"
+        ],
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetObjectRequest"
+            }
+          }
+        }
+      },
+      "GetObjectsResponse": {
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {}
+          }
+        }
+      },
+      "IgnorePluralsValue": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "Disabled"
+            ]
+          },
+          {
+            "type": "string",
+            "enum": [
+              "All"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "Languages"
+            ],
+            "properties": {
+              "Languages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "IndexSchema": {
+        "type": "object",
+        "properties": {
+          "facet_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "float_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "integer_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "text_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OperationIndexRequest": {
+        "type": "object",
+        "required": [
+          "operation",
+          "destination"
+        ],
+        "properties": {
+          "destination": {
+            "type": "string"
+          },
+          "operation": {
+            "type": "string"
+          },
+          "scope": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RemoveStopWordsValue": {
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "Disabled"
+            ]
+          },
+          {
+            "type": "string",
+            "enum": [
+              "All"
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "Languages"
+            ],
+            "properties": {
+              "Languages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "SearchFacetValuesRequest": {
+        "type": "object",
+        "required": [
+          "facetQuery"
+        ],
+        "properties": {
+          "facetQuery": {
+            "type": "string"
+          },
+          "filters": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maxFacetHits": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "SearchFacetValuesResponse": {
+        "type": "object",
+        "required": [
+          "facetHits",
+          "exhaustiveFacetsCount",
+          "processingTimeMS"
+        ],
+        "properties": {
+          "exhaustiveFacetsCount": {
+            "type": "boolean"
+          },
+          "facetHits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetHit"
+            }
+          },
+          "processingTimeMS": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "properties": {
+          "analytics": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "aroundLatLng": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "aroundLatLngViaIP": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "aroundPrecision": {},
+          "aroundRadius": {},
+          "attributesToHighlight": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "attributesToRetrieve": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "clickAnalytics": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "distinct": {},
+          "facetFilters": {},
+          "facets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "filters": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "getRankingInfo": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "highlightPostTag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "highlightPreTag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hitsPerPage": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "ignorePlurals": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IgnorePluralsValue"
+              }
+            ]
+          },
+          "indexName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "insideBoundingBox": {},
+          "insidePolygon": {},
+          "maxValuesPerFacet": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "minimumAroundRadius": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "minimum": 0
+          },
+          "numericFilters": {},
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "params": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "URL-encoded params string (used by multi-query). Merged during deserialization."
+          },
+          "query": {
+            "type": "string"
+          },
+          "queryLanguages": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "removeStopWords": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RemoveStopWordsValue"
+              }
+            ]
+          },
+          "responseFields": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "sort": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "tagFilters": {},
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TaskResponse": {
+        "type": "object",
+        "required": [
+          "task_uid",
+          "status",
+          "received_documents",
+          "indexed_documents",
+          "rejected_documents",
+          "rejected_count"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "indexed_documents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "received_documents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rejected_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rejected_documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocFailureDto"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "task_uid": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "api_key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-algolia-api-key"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": "Health check"
+    },
+    {
+      "name": "indices",
+      "description": "Index management operations"
+    },
+    {
+      "name": "search",
+      "description": "Search and query operations"
+    },
+    {
+      "name": "documents",
+      "description": "Document CRUD operations"
+    },
+    {
+      "name": "settings",
+      "description": "Index settings"
+    },
+    {
+      "name": "synonyms",
+      "description": "Synonym management"
+    },
+    {
+      "name": "rules",
+      "description": "Query rules"
+    },
+    {
+      "name": "keys",
+      "description": "API key management"
+    },
+    {
+      "name": "snapshots",
+      "description": "Backup and restore operations"
+    },
+    {
+      "name": "tasks",
+      "description": "Task status endpoints"
+    }
+  ]
+}

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flapjack Geo Search Demo</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://basemaps.cartocdn.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; }
+
+    .header { padding: 12px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #333; background: #16162a; }
+    .header h1 { font-size: 18px; color: #D2B48C; white-space: nowrap; }
+    .header a { color: #999; text-decoration: none; font-size: 13px; border: 1px solid #444; padding: 4px 10px; border-radius: 4px; }
+    .header a:hover { color: #D2B48C; border-color: #D2B48C; }
+    .header .spacer { flex: 1; }
+    .header .doc-count { font-size: 12px; color: #666; }
+
+    .container { display: grid; grid-template-columns: 300px 1fr 380px; height: calc(100vh - 52px); }
+
+    .sidebar { padding: 16px; overflow-y: auto; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 16px; }
+
+    .search-input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid #555; background: #2a2a3e; color: #e0e0e0; font-size: 16px; outline: none; }
+    .search-input:focus { border-color: #D2B48C; box-shadow: 0 0 0 2px rgba(210,180,140,0.2); }
+    .search-input::placeholder { color: #777; }
+
+    .target-select select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #555; background: #2a2a3e; color: #e0e0e0; font-size: 14px; outline: none; }
+    .target-select label { font-size: 11px; color: #777; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .section-label { font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+
+    .stats-bar { font-size: 13px; color: #aaa; padding: 4px 0; }
+    .stats-bar .latency { color: #D2B48C; }
+
+    .facet-list { list-style: none; max-height: 250px; overflow-y: auto; }
+    .facet-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; font-size: 13px; color: #ccc; }
+    .facet-item:hover { color: #fff; }
+    .facet-item.selected { color: #D2B48C; }
+    .facet-cb { accent-color: #D2B48C; width: 14px; height: 14px; cursor: pointer; }
+    .facet-count { margin-left: auto; color: #666; font-size: 12px; }
+
+    .map-area { position: relative; }
+    #map { width: 100%; height: 100%; background: #0d1117; }
+    .map-overlay { position: absolute; z-index: 1000; pointer-events: none; }
+    .map-info { bottom: 12px; left: 12px; background: rgba(22,22,42,0.92); color: #bbb; padding: 8px 14px; border-radius: 8px; font-size: 13px; backdrop-filter: blur(4px); }
+    .map-hint { top: 12px; left: 50%; transform: translateX(-50%); background: rgba(210,180,140,0.15); border: 1px solid rgba(210,180,140,0.3); color: #D2B48C; padding: 8px 16px; border-radius: 8px; font-size: 13px; transition: opacity 0.5s; }
+    .map-hint.hidden { opacity: 0; }
+
+    .hits-panel { padding: 16px; overflow-y: auto; border-left: 1px solid #333; }
+    .hits-header { font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+    .hit-item { padding: 12px; margin-bottom: 8px; background: #222238; border-radius: 8px; border: 1px solid #333; transition: border-color 0.15s; cursor: default; }
+    .hit-item:hover { border-color: #555; }
+    .hit-item .top-row { display: flex; align-items: baseline; gap: 8px; }
+    .hit-item .iata { font-weight: 700; color: #D2B48C; font-size: 18px; font-family: monospace; }
+    .hit-item .name { font-size: 14px; color: #ddd; }
+    .hit-item .city { font-size: 13px; color: #999; margin-top: 3px; }
+    .hit-item .links { font-size: 12px; color: #666; margin-top: 4px; }
+    .hit-item em { font-style: normal; background: rgba(210,180,140,0.25); color: #fff; padding: 0 2px; border-radius: 2px; }
+
+    .empty-state { color: #666; padding: 40px 20px; text-align: center; font-size: 14px; line-height: 1.6; }
+
+    .how-to { background: #222238; border: 1px solid #333; border-radius: 8px; padding: 14px; font-size: 13px; line-height: 1.6; color: #999; }
+    .how-to strong { color: #ccc; }
+    .how-to ul { margin: 8px 0 0 18px; }
+    .how-to li { margin-bottom: 4px; }
+
+    .leaflet-popup-content-wrapper { background: #222238; color: #ddd; border-radius: 8px; }
+    .leaflet-popup-tip { background: #222238; }
+    .leaflet-popup-content { font-size: 13px; line-height: 1.4; }
+    .leaflet-popup-content b { color: #D2B48C; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🌍 Geo Search — Airports</h1>
+    <a href="/">← Main Demo</a>
+    <div class="spacer"></div>
+    <div class="doc-count" id="doc-count"></div>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="target-select">
+        <label>Search target</label>
+        <select id="target-select"></select>
+      </div>
+      <div>
+        <input type="text" class="search-input" id="searchbox" placeholder="Search airports by name, city, IATA code...">
+      </div>
+      <div class="stats-bar" id="stats"></div>
+      <div>
+        <div class="section-label">Country</div>
+        <ul class="facet-list" id="country-facet"></ul>
+      </div>
+      <div class="how-to">
+        <strong>How to use</strong>
+        <ul>
+          <li><strong>Pan &amp; zoom</strong> the map — results filter to visible area (sends <code>insideBoundingBox</code>)</li>
+          <li><strong>Type</strong> to search by name, city, or IATA code</li>
+          <li><strong>Click a country</strong> to filter by country facet</li>
+          <li>Circle size = number of flight connections</li>
+          <li>Hover markers for airport details</li>
+        </ul>
+      </div>
+    </div>
+    <div class="map-area">
+      <div id="map"></div>
+      <div class="map-overlay map-info" id="map-info">Loading...</div>
+      <div class="map-overlay map-hint" id="map-hint">Pan or zoom the map to filter airports by area</div>
+    </div>
+    <div class="hits-panel">
+      <div class="hits-header">Results</div>
+      <div id="hits"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+  <script>
+    const TARGETS = {
+      local: { label: 'Flapjack (local :7700)', host: 'http://localhost:7700', appId: 'test-app', apiKey: 'test-key' },
+      west: { label: 'Flapjack (us-west-1)', host: 'https://fj-us-west-1.flapjack.foo', appId: 'test-app', apiKey: 'test-key' },
+    }
+    const INDEX = 'airports'
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    let currentTarget = isLocal ? 'local' : 'west'
+
+    const sel = document.getElementById('target-select')
+    Object.entries(TARGETS).forEach(([k, v]) => {
+      const opt = document.createElement('option')
+      opt.value = k
+      opt.textContent = v.label
+      sel.appendChild(opt)
+    })
+    sel.value = currentTarget
+
+    let map = L.map('map').setView([40, -40], 3)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OSM © CARTO',
+      maxZoom: 18,
+    }).addTo(map)
+    let markerGroup = L.layerGroup().addTo(map)
+
+    let query = ''
+    let selectedCountries = new Set()
+    let lastResults = null
+    let hintHidden = false
+    let searchInFlight = false
+
+    async function doSearch() {
+      if (searchInFlight) return
+      searchInFlight = true
+      const t = TARGETS[currentTarget]
+      const b = map.getBounds()
+      const bbox = `${b.getNorthEast().lat},${b.getNorthEast().lng},${b.getSouthWest().lat},${b.getSouthWest().lng}`
+
+      const facetFilters = []
+      if (selectedCountries.size > 0) {
+        facetFilters.push([...selectedCountries].map(c => `country:${c}`))
+      }
+
+      const body = {
+        query: query,
+        hitsPerPage: 100,
+        insideBoundingBox: bbox,
+        facets: ['country'],
+        attributesToHighlight: ['name', 'city', 'iata_code'],
+        highlightPreTag: '<em>',
+        highlightPostTag: '</em>',
+      }
+      if (facetFilters.length > 0) body.facetFilters = facetFilters
+
+      try {
+        const start = performance.now()
+        const resp = await fetch(`${t.host}/1/indexes/${INDEX}/query`, {
+          method: 'POST',
+          headers: { 'x-algolia-api-key': t.apiKey, 'x-algolia-application-id': t.appId, 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        const elapsed = Math.round(performance.now() - start)
+        const data = await resp.json()
+        lastResults = data
+
+        document.getElementById('stats').innerHTML = `<b>${data.nbHits || 0}</b> airports · <span class="latency">${data.processingTimeMS || 0}ms server</span> · ${elapsed}ms total`
+
+        renderHits(data.hits || [])
+        renderMarkers(data.hits || [])
+        renderFacets(data.facets?.country || {})
+
+        if (!hintHidden) {
+          hintHidden = true
+          document.getElementById('map-hint').classList.add('hidden')
+        }
+        document.getElementById('map-info').textContent = `${(data.hits || []).length} airports visible`
+      } catch (e) {
+        document.getElementById('stats').textContent = `Error: ${e.message}`
+      } finally {
+        searchInFlight = false
+      }
+    }
+
+    function renderMarkers(hits) {
+      markerGroup.clearLayers()
+      hits.forEach(hit => {
+        if (!hit._geoloc) return
+        const lat = hit._geoloc.lat, lng = hit._geoloc.lng
+        const r = Math.min(3 + Math.log2((hit.links_count || 1) + 1) * 1.5, 14)
+        const marker = L.circleMarker([lat, lng], {
+          radius: r,
+          fillColor: '#D2B48C',
+          color: '#444',
+          weight: 1,
+          fillOpacity: 0.75,
+        })
+        marker.bindPopup(`<b>${hit.iata_code || '?'}</b><br>${hit.name}<br>${hit.city || ''}, ${hit.country || ''}<br>${hit.links_count || 0} connections`)
+        markerGroup.addLayer(marker)
+      })
+    }
+
+    function renderHits(hits) {
+      const el = document.getElementById('hits')
+      if (hits.length === 0) {
+        el.innerHTML = '<div class="empty-state">No airports in this area.<br>Try zooming out or clearing filters.</div>'
+        return
+      }
+      el.innerHTML = hits.map(h => {
+        const hl = h._highlightResult || {}
+        const name = hl.name?.value || h.name || ''
+        const city = hl.city?.value || h.city || ''
+        const iata = h.iata_code || '—'
+        return `<div class="hit-item" data-lat="${h._geoloc?.lat}" data-lng="${h._geoloc?.lng}">
+          <div class="top-row"><span class="iata">${iata}</span> <span class="name">${name}</span></div>
+          <div class="city">${city}, ${h.country || ''}</div>
+          <div class="links">${h.links_count || 0} connections</div>
+        </div>`
+      }).join('')
+
+      el.querySelectorAll('.hit-item').forEach(item => {
+        item.addEventListener('mouseenter', () => {
+          const lat = parseFloat(item.dataset.lat), lng = parseFloat(item.dataset.lng)
+          if (!isNaN(lat)) map.panTo([lat, lng], { animate: true, duration: 0.3 })
+        })
+      })
+    }
+
+    function renderFacets(countryFacets) {
+      const el = document.getElementById('country-facet')
+      const entries = Object.entries(countryFacets).sort((a, b) => b[1] - a[1]).slice(0, 20)
+      if (entries.length === 0) { el.innerHTML = '<li style="color:#666;font-size:13px">No facets available</li>'; return }
+      el.innerHTML = entries.map(([name, count]) => {
+        const checked = selectedCountries.has(name)
+        return `<li class="facet-item ${checked ? 'selected' : ''}" data-country="${name}">
+          <input type="checkbox" class="facet-cb" ${checked ? 'checked' : ''}>
+          <span>${name}</span>
+          <span class="facet-count">${count}</span>
+        </li>`
+      }).join('')
+      el.querySelectorAll('.facet-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          const c = item.dataset.country
+          if (selectedCountries.has(c)) selectedCountries.delete(c)
+          else selectedCountries.add(c)
+          doSearch()
+        })
+      })
+    }
+
+    let searchDebounce = null
+    document.getElementById('searchbox').addEventListener('input', (e) => {
+      query = e.target.value
+      clearTimeout(searchDebounce)
+      searchDebounce = setTimeout(doSearch, 150)
+    })
+
+    map.on('moveend', () => doSearch())
+
+    sel.addEventListener('change', (e) => {
+      currentTarget = e.target.value
+      doSearch()
+      fetch(`${TARGETS[currentTarget].host}/1/indexes/${INDEX}/query`, {
+        method: 'POST',
+        headers: { 'x-algolia-api-key': TARGETS[currentTarget].apiKey, 'x-algolia-application-id': TARGETS[currentTarget].appId, 'content-type': 'application/json' },
+        body: JSON.stringify({ query: '', hitsPerPage: 0 }),
+      }).then(r => r.json()).then(d => {
+        document.getElementById('doc-count').textContent = `${d.nbHits || 0} airports indexed on ${currentTarget}`
+      }).catch(() => {})
+    })
+
+    // Single initial search + doc count fetch (avoid duplicate doSearch)
+    doSearch()
+    const initTarget = TARGETS[currentTarget]
+    fetch(`${initTarget.host}/1/indexes/${INDEX}/query`, {
+      method: 'POST',
+      headers: { 'x-algolia-api-key': initTarget.apiKey, 'x-algolia-application-id': initTarget.appId, 'content-type': 'application/json' },
+      body: JSON.stringify({ query: '', hitsPerPage: 0 }),
+    }).then(r => r.json()).then(d => {
+      document.getElementById('doc-count').textContent = `${d.nbHits || 0} airports indexed on ${currentTarget}`
+    }).catch(() => {})
+  </script>
+</body>
+</html>
